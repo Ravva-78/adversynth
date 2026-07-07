@@ -1,0 +1,10 @@
+# CycleGAN — Phase 5 config
+image_size: 64
+batch_size: 4       # CycleGAN is memory heavy; keep small on free GPU
+epochs: 200
+lr: 0.0002
+lambda_cycle: 10.0
+lambda_identity: 0.5
+n_res_blocks: 9
+domain_a_grade: 0   # Healthy (Grade 0)
+domain_b_grade: 3   # Severe DR (Grade 3)

@@ -1,0 +1,9 @@
+# DCGAN — Phase 3 config
+image_size: 64
+batch_size: 128
+epochs: 100
+lr: 0.0002
+latent_dim: 100
+features_g: 64    # base channel multiplier for Generator
+features_d: 64    # base channel multiplier for Discriminator
+spectral_norm: false   # set true to enable spectral normalisation on D

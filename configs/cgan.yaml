@@ -1,0 +1,11 @@
+# Conditional GAN — Phase 4 config
+image_size: 64
+batch_size: 64
+epochs: 150
+lr: 0.0002
+latent_dim: 100
+n_classes: 5
+embed_dim: 50
+features_g: 64
+features_d: 64
+synth_per_class: 500   # images to generate per DR grade after training
