@@ -7,26 +7,42 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  build:
-
+  test:
+    name: Build & Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python 3.10
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
-        
-    - name: Install dependencies
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install Core & Test Dependencies
       run: |
         python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        
-    - name: Syntax Check
+        pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+        pip install -r requirements.txt
+        pip install pytest flake8 pytest-cov
+
+    - name: Lint with Flake8
       run: |
-        # Quick compilation check to ensure no syntax errors exist in the project
-        python -m py_compile models/*.py
-        python -m py_compile training/*.py
-        python -m py_compile evaluation/*.py
+        # Stop build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=venv,.venv,data,outputs,checkpoints
+        # Exit-zero treat all other warnings
+        flake8 . --count --exit-zero --max-complexity=15 --max-line-length=120 --statistics --exclude=venv,.venv,data,outputs,checkpoints
+
+    - name: Run Test Suite
+      run: |
+        pytest -v
+
+    - name: Verify End-to-End Demo Generation
+      run: |
+        python generate_demo.py --out ci_demo_output.png

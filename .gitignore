@@ -1,11 +1,32 @@
 venv/
+.venv/
 data/raw/
 data/processed/
 data/synthetic/
 .env
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 .ipynb_checkpoints/
 wandb/
 checkpoints/
 outputs/
+*.pt
+*.pth
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build & Packaging
+build/
+dist/
+*.egg-info/
+
+# OS specific
+.DS_Store
+Thumbs.db
+demo_output.png
+ci_demo_output.png

@@ -3,7 +3,7 @@ Phase 4 — Train Conditional GAN.
 Oversample Grade 3 & 4 to address class imbalance.
 Run: python training/train_cgan.py --config configs/cgan.yaml
 """
-import argparse, yaml
+import argparse, yaml, os
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, WeightedRandomSampler
@@ -54,8 +54,14 @@ def train(cfg):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    # Initialize Weights & Biases tracking
-    wandb.init(project="AdverSynth", config=cfg, name="cgan_training")
+    # Initialize Weights & Biases tracking safely (offline mode if unauthenticated)
+    use_wandb = cfg.get("use_wandb", True)
+    if use_wandb:
+        try:
+            mode = "online" if os.environ.get("WANDB_API_KEY") else "offline"
+            wandb.init(project="AdverSynth", config=cfg, name="cgan_training", mode=mode)
+        except Exception as e:
+            print(f"[INFO] WandB logging bypassed ({e}); continuing with local tracking.")
 
     out_dir  = Path("outputs/cgan"); out_dir.mkdir(parents=True, exist_ok=True)
     ckpt_dir = Path("checkpoints/cgan"); ckpt_dir.mkdir(parents=True, exist_ok=True)
@@ -115,7 +121,8 @@ def train(cfg):
         print(f"  D_loss: {avg_d:.4f}  G_loss: {avg_g:.4f}")
         
         # Log metrics to WandB
-        wandb.log({"D_loss": avg_d, "G_loss": avg_g, "epoch": epoch + 1})
+        if wandb.run is not None:
+            wandb.log({"D_loss": avg_d, "G_loss": avg_g, "epoch": epoch + 1})
 
         if (epoch + 1) % 5 == 0:
             G.eval()
@@ -127,7 +134,8 @@ def train(cfg):
                        nrow=8, normalize=True, value_range=(-1, 1))
             
             # Log generated image grid to WandB
-            wandb.log({"Generated Samples": wandb.Image(str(sample_path)), "epoch": epoch + 1})
+            if wandb.run is not None:
+                wandb.log({"Generated Samples": wandb.Image(str(sample_path)), "epoch": epoch + 1})
             torch.save(G.state_dict(), ckpt_dir / f"G_epoch_{epoch+1:03d}.pt")
             torch.save(D.state_dict(), ckpt_dir / f"D_epoch_{epoch+1:03d}.pt")
 
@@ -135,7 +143,8 @@ def train(cfg):
     generate_and_save(G, n_per_class=cfg.get("synth_per_class", 500),
                       latent_dim=LATENT_DIM, device=device, out_dir=out_dir)
     
-    wandb.finish()
+    if wandb.run is not None:
+        wandb.finish()
 
 
 if __name__ == "__main__":

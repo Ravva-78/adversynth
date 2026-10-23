@@ -5,9 +5,12 @@ Run: python evaluation/fid_score.py --real data/processed/train --fake data/synt
 import argparse
 import subprocess
 from pathlib import Path
+import torch
 
 
-def compute_fid(real_dir, fake_dir, batch_size=50, device="cuda"):
+def compute_fid(real_dir, fake_dir, batch_size=50, device=None):
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
     """
     Uses pytorch-fid package.
     Expects real_dir and fake_dir to contain images directly (not in subfolders).
@@ -46,6 +49,6 @@ if __name__ == "__main__":
     parser.add_argument("--real",   default="data/processed/train")
     parser.add_argument("--fake",   default="data/synthetic/cgan")
     parser.add_argument("--batch",  default=50, type=int)
-    parser.add_argument("--device", default="cuda")
+    parser.add_argument("--device", default=None, help="Device to run on ('cuda' or 'cpu')")
     args = parser.parse_args()
     compute_fid(args.real, args.fake, args.batch, args.device)
